@@ -7,13 +7,13 @@
 <%@ page import="java.text.*"%>
 <%@ page import="com.olympus.nbva.assets.AssetData"%>
 <%@ page import="com.olympus.nbva.contracts.ContractData"%>
-
+<%@ page import="com.olympus.nbva.contracts.CalcTableData"%>
 <%@ page import="org.apache.commons.lang3.tuple.*"%>
 <%@ page import="com.olympus.olyutil.*"%>
 <%@ page import="com.olympus.nbva.DateUtil"%>
 <%@ page import="java.lang.reflect.*"%>
 
-<% 
+<%
 	String title =  "Olympus NBVA Asset List Report"; 
 	 
 	ArrayList<String> tokens = new ArrayList<String>();
@@ -32,14 +32,26 @@
 	HashMap<String, String> codeMap = new HashMap<String, String>();
 	HashMap<String, String> rtnAssetMap = new HashMap<String, String>();
 	
-	codeMap = (HashMap<String, String> )session.getAttribute("codeMapRtn");
-	rtnAssetMap = (HashMap<String, String> )session.getAttribute("returnMap");
+	codeMap = (HashMap<String, String>)session.getAttribute("codeMapRtn");
+	rtnAssetMap = (HashMap<String, String>)session.getAttribute("returnMap");
 	String useCodeData = (String) session.getAttribute("useCodeData");
 	
-	//HashMap<String, CalcTableData> calcTableMap = new HashMap<String, CalcTableData>();
-	//calcTableMap = (HashMap<String, CalcTableData> )session.getAttribute("CalcTableData");
-	//System.out.println("*** Buy - 24plus (5):" +  calcTableMap.get("5").getRoll24plus() + "--");
-	
+	 HashMap<String, CalcTableData> ctMap = new HashMap<String, CalcTableData>();
+	 ctMap = (HashMap<String, CalcTableData>)session.getAttribute("calcTableMap");
+	 
+	 System.out.println("*** JSP -> The size of the rtnAssetMap is:" + rtnAssetMap.size());
+	 
+	 
+	 
+	if (ctMap != null) {
+		if (ctMap.isEmpty()) {
+			 System.out.println("*** JSP -> ctMap is Empty"); 
+		 }
+		System.out.println("*** JSP -> The size of the ctMap is:" + ctMap.size());
+		System.out.println("*** JSP --Buy - 24plus (5):" + ctMap.get("5").getRoll24plus() + "--");
+	} else {
+		System.out.println("*** JSP -> ctMap is Null");
+	}
 	/*
 	Set<String> keys = codeMap.keySet();  //get all keys
 	for(String key: keys) {	
@@ -52,7 +64,6 @@
 		System.out.println("^^^^^^^ Not using code data-- CM_ID="  + codeMap.get("asset") +"-- UCD=" +  useCodeData);	
 	}
 	*/
-	
 %>
 
 <!DOCTYPE html>

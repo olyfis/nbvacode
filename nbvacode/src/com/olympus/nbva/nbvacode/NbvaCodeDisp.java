@@ -39,7 +39,7 @@ import com.olympus.nbva.assets.AssetData;
 import com.olympus.nbva.contracts.ContractData;
 import com.olympus.nbva.kits.GetKitData;
 import com.olympus.olyutil.Olyutil;
-//import com.olympus.nbva.contracts.CalcTableData;
+import com.olympus.nbva.contracts.CalcTableData;
 
 import org.apache.commons.fileupload.FileItem;
 import org.apache.commons.fileupload.disk.DiskFileItemFactory;
@@ -734,7 +734,7 @@ public class NbvaCodeDisp extends HttpServlet {
 			String key = "";
 			String rVal = "";
 			strArr = Olyutil.readInputFile(statFile);
-			if (strArr.size() >0) {
+			if (strArr.size() > 0) {
 				for (String str : strArr) {
 					String[] items = str.split(",");
 					key = items[0];
@@ -767,35 +767,41 @@ public class NbvaCodeDisp extends HttpServlet {
 	}
 
 	/****************************************************************************************************************************************************************/
- /*	
- 	public static HashMap<String, CalcTableData> getCalcTableMap(ArrayList<String> sArr, HashMap<String, CalcTableData> hMap) {
+ 
+ 	public static HashMap<String, CalcTableData> getCalcTableMap(ArrayList<String> sArr) {
+		HashMap<String, CalcTableData> hMap = new HashMap<String, CalcTableData>();
  		String mth = "";
  		
+ 		if (sArr.size() > 0) {		
+ 			for (String str : sArr) { // iterating ArrayList
+ 	 			CalcTableData calcTab = new CalcTableData();
+ 				//System.out.println("**** Str=" + str);
+ 				String[] items = str.split(",");
+ 				if (items[0].equals("Months")) {
+ 					continue;
+ 				}
+ 				mth = items[0];
+ 				calcTab.setMonth(mth);
+ 				calcTab.setBuy24plus(Olyutil.strToDouble(items[1]));
+ 				calcTab.setRoll24plus(Olyutil.strToDouble(items[2]));
+ 				calcTab.setBuy24(Olyutil.strToDouble(items[3]));
+ 				calcTab.setRoll24(Olyutil.strToDouble(items[4]));
+ 				hMap.put(mth, calcTab);
+ 	 		}		
+ 		} else {
+ 			hMap = null;
+ 		}
  		
- 		for (String str : sArr) { // iterating ArrayList
- 			CalcTableData calcTab = new CalcTableData();
-			//System.out.println("**** Str=" + str);
-			String[] items = str.split(",");
-			if (items[0].equals("Months")) {
-				continue;
-			}
-			mth = items[0];
-			calcTab.setMonth(mth);
-			calcTab.setBuy24plus(Olyutil.strToDouble(items[1]));
-			calcTab.setRoll24plus(Olyutil.strToDouble(items[2]));
-			calcTab.setBuy24(Olyutil.strToDouble(items[3]));
-			calcTab.setRoll24(Olyutil.strToDouble(items[4]));
-			hMap.put(mth, calcTab);
- 		}	
+ 		
  		return(hMap);
  	}
-*/
+ 
 	/****************************************************************************************************************************************************************/
 
 
 		@Override
 		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-	//HashMap<String, CalcTableData> calcTableMap = new HashMap<String, CalcTableData>();
+			HashMap<String, CalcTableData> calcTableMap = new HashMap<String, CalcTableData>();
 			HashMap<String, String> returnMap = new HashMap<String, String>();
 			HashMap<String, String> paramMap = new HashMap<String, String>();
 			HashMap<String, String> codeMapRtn = new HashMap<String, String>();
@@ -883,19 +889,16 @@ public class NbvaCodeDisp extends HttpServlet {
 				//int mthRem = 0;
 				
 				ageArr = Olyutil.readInputFile(ageFile);
-				//calcArr = Olyutil.readInputFile(calcFile);
+				calcArr = Olyutil.readInputFile(calcFile);
 				returnMap = getReturnStat(rtnFile);
 				//displayHashMap(returnMap);
-		//calcTableMap = getCalcTableMap(calcArr, calcTableMap);
-		//System.out.println("*** Roll - 24plus:" +  calcTableMap.get("15").getRoll24plus() + "--");
+				calcTableMap = getCalcTableMap(calcArr);
+				System.out.println("*** Roll - 24plus (15) :" +  calcTableMap.get("15").getRoll24plus() + "--");
 				
 				// Olyutil.printStrArray(ageArr);
 				// Olyutil.printStrArray(calcArr);
 				// get data from DB
-				strArr = getDbData(idVal, sqlFile, "", "Asset");
-				
-				
-				
+				strArr = getDbData(idVal, sqlFile, "", "Asset");			
 				arrSZ = strArr.size();
 				  //System.out.println("*** arrSz:" + arrSZ + "--");
 				if (arrSZ > 0) {
@@ -937,9 +940,12 @@ public class NbvaCodeDisp extends HttpServlet {
 					request.getSession().setAttribute("codeMapRtn", codeMapRtn);
 					request.getSession().setAttribute("useCodeData", useCodeData);
 					request.getSession().setAttribute("returnMap", returnMap);
-					request.getSession().setAttribute("naDate", naDate);
-					//request.getSession().setAttribute("calcTableMap", calcTableMap);
 					
+					request.getSession().setAttribute("calcTableMap", calcTableMap);
+				
+					request.getSession().setAttribute("naDate", naDate);
+					
+					System.out.println("***!!!*** java -- Buy - 24plus (5):" +  calcTableMap.get("5").getRoll24plus() + "--");
 					String opt = "";
 					if (errIDArrayRtn.size() > 0) {
 						sqlErrMap.put(idVal, errIDArrayRtn);
@@ -950,7 +956,7 @@ public class NbvaCodeDisp extends HttpServlet {
 					request.getSession().setAttribute("opt", opt);
 					//System.out.println("*** Dispatch to:" + dispatchJSP);
 					//System.out.println("*** Buy - 24plus (3):" +  calcTableMap.get("3").getBuy24plus() + "--");
-					//dispatchJSP = "/test.jsp";	
+					System.out.println("The size of the calcTableMap is:" + calcTableMap.size()); 
 					request.getRequestDispatcher(dispatchJSP).forward(request, response);	
 				} else {
 					request.getRequestDispatcher(dispatchJSP_Error).forward(request, response);
@@ -975,128 +981,7 @@ public class NbvaCodeDisp extends HttpServlet {
 		
 		/****************************************************************************************************************************************************/
 		
-		/*
-		 * 
-		 * 
-		 * @Override
-		protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-			HashMap<String, ArrayList<Integer>> sqlErrMap = new HashMap<String, ArrayList<Integer>>();
-			
-		
-			
-			ArrayList<Integer> errIDArrayRtn = new ArrayList<>();
-			ArrayList<String> ageArr = new ArrayList<String>();
-			double sumTotal = 0.0;
-			ContractData contractData = new ContractData();
-			AssetData assetData = new AssetData();
-			List<Pair<ContractData, List<AssetData>>> rtnPair = new ArrayList<>();
-			int rtnArrSZ = 0;
-			ArrayList<String> strArr = new ArrayList<String>();
-			ArrayList<String> kitArr = new ArrayList<String>();
-			String idVal = "";
-			String dispatchJSP = "/nbvacodedetail_update.jsp";
-			String dispatchJSP_Error = "/nbvaerror.jsp";
-			//String ageFile = "Y:\\GROUPS\\Global\\BI Reporting\\Finance\\FIS_Bobj\\unappsuspense\\dailyAge.csv";
-			String ageFile = "C:\\Java_Dev\\props\\nbvaupdate\\dailyAge.csv";
-			String tag = "csvData: ";
-			DecimalFormat format = new DecimalFormat("0.00");
-			String paramName = "id";
-			String paramValue = request.getParameter(paramName).trim();
-
-			String roParamName = "rotype";
-			String roParamValue = request.getParameter(roParamName);
-
-			String eDateParamName = "eDate";
-			String eDateParamValue = request.getParameter(eDateParamName);
-			String effDate = eDateParamValue;
-			Date bd = Olyutil.getCurrentDate();
-			SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd"); 
-			String boDate = formatter.format(bd);
-		 
-			System.out.println("Date=" + boDate + "-");  
-			System.out.println("*** Edate=" + effDate + "--");
-			
-			String boDateParamName = "boDate";
-			String boDateParamValue = request.getParameter(boDateParamName);
-			String boDate = boDateParamValue;
-			
-			String invoiceParamName = "invoice";
-			String invoiceParamValue = request.getParameter(invoiceParamName);
-			String invoice = invoiceParamValue;
  
-			// System.out.println("*** eDate=" + eDateParamValue + "-- RO=" + roParamValue +
-			// "--");
-			String formUrl = "formUrl";
-			String formUrlValue = "/nbvacode/nbvacodeexcel";
-			request.getSession().setAttribute(formUrl, formUrlValue);
-			String sep = ";";
-			//String termPlusSpan = "";
-			int mthSpan = 9;
-			//int rtn = 0;
-			//int dayChkRtn = 0;
-			int arrSZ = 0;
-			//int mthRem = 0;
-			
-			ageArr = Olyutil.readInputFile(ageFile);
-			// Olyutil.printStrArray(ageArr);
-
-			if ((paramValue != null && !paramValue.isEmpty())) {
-				idVal = paramValue.trim();
-				// System.out.println("*** idVal:" + idVal + "--");
-			}
-			strArr = getDbData(idVal, sqlFile, "", "Asset");
-			arrSZ = strArr.size();
-			  //System.out.println("*** arrSz:" + arrSZ + "--");
-			if (arrSZ > 0) {
-				 //Olyutil.printStrArray(strArr);
-				kitArr = GetKitData.getKitData(kitFileName);
-				// Olyutil.printStrArray(kitArr);
-				//rtnPair = parseData(strArr, arrSZ, effDate );
-				contractData = rtnPair.get(0).getLeft();
-				rtnArrSZ = rtnPair.get(0).getRight().size(); 
-				// System.out.println("*** RTN Arr SZ=" + rtnArrSZ + "--");
-				// System.out.println("*** ContractReturn: ID=" + contractData.getContractID() +
-				// "--");
-				// System.out.println("*** ContractReturn: EquipCost=" +
-				// contractData.getEquipPayment() + "--");
-				// request.getSession().setAttribute("contract", contractData);
-				request.getSession().setAttribute("rtnPair", rtnPair);
-				 //System.out.println("*** Get Contract Totals");
-				 sumTotal = getContractTotals(idVal, ageArr, ";");
-				 errIDArrayRtn = doCheckDates(rtnPair, effDate, mthSpan);
-				//System.out.println("----- dateErrors=" + errIDArrayRtn.size());
-				String termDate = rtnPair.get(0).getLeft().getTermDate();
-				String commDate = rtnPair.get(0).getLeft().getCommenceDate();
-				
-				
-				//System.out.println("*** SumTotal=" + sumTotal );
-				String termPlusSpan = DateUtil.addMonthsToDate(termDate, mthSpan);	
-				rtnPair.get(0).getLeft().setTermPlusSpan(termPlusSpan);
-				request.getSession().setAttribute("commDate", commDate);
-				request.getSession().setAttribute("termDate", termDate);
-				request.getSession().setAttribute("boDate", boDate);
-				request.getSession().setAttribute("effDate", effDate);
-				request.getSession().setAttribute("mthRem", mthRem);
-				request.getSession().setAttribute("idVal", idVal);
-				request.getSession().setAttribute("sumTotal", sumTotal);
-				request.getSession().setAttribute("sqlErrMap", sqlErrMap);
-				request.getSession().setAttribute("termPlusSpan", termPlusSpan);
-				
-				String opt = "";
-				if (errIDArrayRtn.size() > 0) {
-					sqlErrMap.put(idVal, errIDArrayRtn);
-					dispatchJSP = "/nbvaerror.jsp";	
-				} else {			
-					  opt = contractCalcs( effDate, termDate, termPlusSpan, rtnPair);
-				}	
-				request.getSession().setAttribute("opt", opt);
-				request.getRequestDispatcher(dispatchJSP).forward(request, response);	
-			} else {
-				request.getRequestDispatcher(dispatchJSP_Error).forward(request, response);
-			}
-		} // End doGet()
-
-*/
 	} // End Class
 
  
