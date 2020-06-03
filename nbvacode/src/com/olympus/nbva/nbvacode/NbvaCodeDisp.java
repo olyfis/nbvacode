@@ -434,7 +434,7 @@ public class NbvaCodeDisp extends HttpServlet {
 			return (dRtn);	 
 			}	 
 		/****************************************************************************************************************************************************/
-		public static String contractCalcs(String effDate, String termDate, String termPlusSpan, List<Pair<ContractData, List<AssetData> >> dataObj) {	
+		public static String contractCalcs(String effDate, String termDate, String termPlusSpan, List<Pair<ContractData, List<AssetData> >> dataObj, HashMap<String, CalcTableData> cMap) {	
 			// String effDate = "2020-08-01";
 			// String termDate = "2020-01-01";
 			// String termPlusSpan = "2020-09-01";
@@ -447,21 +447,21 @@ public class NbvaCodeDisp extends HttpServlet {
 			//System.out.println("***^^^^^*** rtn=" + rtn + "-- rtnSpan=" + rtnSpan + "--");
 			if (rtn == -1) { // effDate < termDate)
 				opt = "opt1";
-				doCalcData(dataObj, "opt_1");
+				doCalcData(dataObj, "opt_1", cMap);
 				//System.out.println("*** Opt 1 -- R=" + rtn + " Effective Date < Term Date");
 			}
 			//System.out.println("***^ rtn_eff_gt=" + rtn_eff_gt + "-- rtn_eff_lt_t9=" + rtn_eff_lt_t9 + "--");	
 			// if (effdate > termDate and effDate < (Term Date + 9 Months) termPlusSpan = "2020-09-01"; effDate = "2020-08-01" termDate = "2020-01-01";
 			if (rtn_eff_gt == 1 && rtn_eff_lt_t9 == -1) { 
 				opt = "opt2";
-				doCalcData(dataObj, "opt_2");
+				doCalcData(dataObj, "opt_2", cMap);
 				//System.out.println("***^^^ Opt 2 ^^*** rtn_eff_gt=" + rtn_eff_gt + "-- rtn_eff_lt_t9=" + rtn_eff_lt_t9 + "--");
 				//System.out.println("*** (effdate > termDate and effDate < (Term Date + 9 Months)");
 			}
 			// effDate > (Term Date + 9 Months)); effDate = "2021-08-01"; termDate = "2020-01-01"; termPlusSpan = "2020-09-01";
 			if (rtnSpan == 1) { 
 				opt = "opt3";
-				doCalcData(dataObj, "opt_3");
+				doCalcData(dataObj, "opt_3", cMap);
 				//System.out.println("^^^^ Opt 3 -- R=" + rtn + " effDate  > (Term Date + 9 Months)");
 			}
 			return(opt);
@@ -470,7 +470,7 @@ public class NbvaCodeDisp extends HttpServlet {
 		// Option 1 -> Effective Date < Term Date
 		// Option 2 -> Effective Date Is Between Term Date and Term Date + 9 Months
 		// Option 3 -> Effective Date > (Term Date + 9 Months) 
-		public static void  doCalcData(List<Pair<ContractData, List<AssetData> >> dataObj, String option) {
+		public static void  do__CalcData_ORIG(List<Pair<ContractData, List<AssetData> >> dataObj, String option) {
 			List<AssetData> assets = new ArrayList<AssetData>();
 			String purchOpt = "";
 			long assetID = 0;
@@ -798,6 +798,118 @@ public class NbvaCodeDisp extends HttpServlet {
  
 	/****************************************************************************************************************************************************************/
 
+ // Option 1 -> Effective Date < Term Date
+ 		// Option 2 -> Effective Date Is Between Term Date and Term Date + 9 Months
+ 		// Option 3 -> Effective Date > (Term Date + 9 Months) 
+ 	// MOD_2020-06-02
+ 		public static void  doCalcData(List<Pair<ContractData, List<AssetData> >> dataObj, String option, HashMap<String, CalcTableData> calcTableMap) {
+ 			System.out.println("The size of the calcTableMap is:" + calcTableMap.size()); 
+ 			List<AssetData> assets = new ArrayList<AssetData>();
+ 			String purchOpt = "";
+ 			long assetID = 0;
+ 			double price = 0.00;
+ 			double rentalAmt = 0.00; // payment per month
+ 			double rate = 0.0725;
+ 			double residual = 0.00;
+ 			double pv = 0.00;
+ 			double equipCost = 0.00;
+ 			double buyOutTotal = 0.00;
+ 			double rollTotal = 0.00;
+ 			double rtnTotal = 0.00;
+ 			double residualFactor = 0.00; // assigned from calcTable
+ 			
+ 			
+ 			String key = Integer.toString(mthRem); ;
+ 			int dispCode = 0;
+ 			int k = 0;
+ 			int rArrSZ = dataObj.get(0).getRight().size();
+ 			//System.out.println("*** rArrSZ=" + rArrSZ + "--");
+ 			System.out.println("*** mthRem:" + mthRem + "--");
+ 			System.out.println("*** getBuy24:" + calcTableMap.get(key).getBuy24() + "--");
+ 			System.out.println("*** getBuy24plus:" + calcTableMap.get(key).getBuy24plus() + "--");
+ 			System.out.println("*** getRoll24:" + calcTableMap.get(key).getRoll24() + "--");
+ 			System.out.println("*** getRoll24plus:" + calcTableMap.get(key).getRoll24plus() + "--");
+ 			
+ 			
+ 			
+ 			ContractData contract =  dataObj.get(0).getLeft();
+ 			purchOpt = contract.getPurOption();
+ 			assets = dataObj.get(0).getRight();
+ 			for (k = 0; k < rArrSZ; k++) {	
+ 				price = 0.00;
+ 				rentalAmt = assets.get(k).getaRentalAmt();
+ 				assetID = assets.get(k).getAssetId();
+ 				residual = assets.get(k).getResidAmt();
+ 				dispCode = assets.get(k).getDispCode();
+ 				equipCost = assets.get(k).getEquipCost();
+ 				pv = getPV(rate, mthRem, rentalAmt, residual, false) ;
+ 				double rollPrice = 0.00;
+ 				double buyPrice = 0.00;
+ 				double rtnPrice = 0.00;
+ 				
+ 				
+ 					if (purchOpt.equals("01"))  { //  ($1.00 Buyout)
+ 						rollPrice = (mthRem * rentalAmt); // rollOver
+ 						buyPrice = (mthRem * rentalAmt);
+ 						rtnPrice = (mthRem * rentalAmt);	
+ 					} else {
+ 						if (option.equals("opt_1")) { // within contractual term
+ 						//System.out.println("*** OPT="  +  option + " -- ID="  +  assetID + " -- PO=" + purchOpt + "-- RA=" + rentalAmt + "-- dispCode=" + dispCode +   "-- PV=" + pv + "--");	
+ 							if (residual > 0) { // Option 1	
+ 								// rollover
+ 								rollPrice = (mthRem * rentalAmt) + pv;
+ 								// buyout
+ 								buyPrice = (mthRem * rentalAmt) + (residual * 1.20);
+ 								// return
+ 								rtnPrice = (mthRem * rentalAmt);
+ 						    } else if (residual == 0)  {					        
+ 						    	rollPrice = (mthRem * rentalAmt) + 1.01;
+ 							    buyPrice = (mthRem * rentalAmt) + 1.01;
+ 							    rtnPrice = (mthRem * rentalAmt) + 1.01;			 
+ 						    }
+ 						} else if (option.equals("opt_2")) {	// less than 9 months in evergreen			
+ 								if (residual > 0) { // Option 3
+ 											rollPrice = (residual * 1.15);
+ 											buyPrice = (residual * 1.20);
+ 								  			rtnPrice = 0.00; 
+ 								} else if (residual == 0)  {	
+ 									rollPrice = equipCost * 0.10;
+ 									buyPrice = equipCost * 0.10;	
+ 									rtnPrice = 0.00;		
+ 								}
+ 						} else if (option.equals("opt_3")) { // in evergreen >= 9 months
+ 							if (residual > 0) { // Option 3
+ 								 
+ 									rollPrice =  residual * ( 1.15 + (0.05 * mthRem));	
+ 									buyPrice =  residual * ( 1.20 + (0.05 * mthRem));
+ 									rtnPrice = 0.00;
+ 								 	
+ 						    } else if (residual == 0)  { 
+ 						    	   rollPrice =  1.01;
+ 						    	   buyPrice =  1.01;
+ 								   rtnPrice = 0.00;	 		       
+ 							}	 
+ 						} // End opt_3
+ 				} // end else
+ 				//dataObj.get(0).getRight().get(k).setFloorPrice(price);
+ 				dataObj.get(0).getRight().get(k).setBuyPrice(buyPrice);;
+ 				buyOutTotal += buyPrice;
+ 				rollTotal += rollPrice;
+ 				rtnTotal += rtnPrice;
+ 				dataObj.get(0).getRight().get(k).setRollPrice(rollPrice);;
+ 				dataObj.get(0).getRight().get(k).setRtnPrice(rtnPrice);;
+ 				//assets.add(k, element);
+ 				//System.out.println("*** OPT="  +  option + " -- floorPrice=" +  price + "-- ID="  +  assetID + " -- PV=" + pv  + " -- PO=" + purchOpt + "-- RA=" + rentalAmt + "-- dispCode=" + dispCode   + "--");
+
+ 			} // End for
+ 			dataObj.get(0).getLeft().setBuyOut(buyOutTotal);
+ 			dataObj.get(0).getLeft().setRollTotal(rollTotal);
+ 			dataObj.get(0).getLeft().setRtnTotal(rtnTotal);
+ 			
+ 		}
+ 		
+	/****************************************************************************************************************************************************************/
+
 
 		@Override
 		protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
@@ -837,6 +949,8 @@ public class NbvaCodeDisp extends HttpServlet {
 			if (paramMap != null) {
 				boolean stat = doValidateParams( paramMap);
 				if (stat) {
+					calcArr = Olyutil.readInputFile(calcFile);
+					calcTableMap = getCalcTableMap(calcArr);
 					effDate = paramMap.get("eDate");
 					idVal = paramMap.get("id");
 					//System.out.println("!!**^^** STAT=true" );
@@ -889,11 +1003,11 @@ public class NbvaCodeDisp extends HttpServlet {
 				//int mthRem = 0;
 				
 				ageArr = Olyutil.readInputFile(ageFile);
-				calcArr = Olyutil.readInputFile(calcFile);
+				 
 				returnMap = getReturnStat(rtnFile);
 				//displayHashMap(returnMap);
-				calcTableMap = getCalcTableMap(calcArr);
-				System.out.println("*** Roll - 24plus (15) :" +  calcTableMap.get("15").getRoll24plus() + "--");
+				
+				//System.out.println("*** Roll - 24plus (15) :" +  calcTableMap.get("15").getRoll24plus() + "--");
 				
 				// Olyutil.printStrArray(ageArr);
 				// Olyutil.printStrArray(calcArr);
@@ -908,7 +1022,7 @@ public class NbvaCodeDisp extends HttpServlet {
 					rtnPair = parseData(strArr, arrSZ, effDate, codeMapRtn );
 					contractData = rtnPair.get(0).getLeft();
 					rtnArrSZ = rtnPair.get(0).getRight().size(); 
-					 System.out.println("*** RTN Arr SZ=" + rtnArrSZ + "--");
+					 //System.out.println("*** RTN Arr SZ=" + rtnArrSZ + "--");
 					 
 					 
 					// codeMapSQL = getCodesSQL(rtnPair);
@@ -945,18 +1059,18 @@ public class NbvaCodeDisp extends HttpServlet {
 				
 					request.getSession().setAttribute("naDate", naDate);
 					
-					System.out.println("***!!!*** java -- Buy - 24plus (5):" +  calcTableMap.get("5").getRoll24plus() + "--");
+					//System.out.println("***!!!*** java -- Buy - 24plus (5):" +  calcTableMap.get("5").getRoll24plus() + "--");
 					String opt = "";
 					if (errIDArrayRtn.size() > 0) {
 						sqlErrMap.put(idVal, errIDArrayRtn);
 						dispatchJSP = "/nbvaerror.jsp";	
 					} else {			
-						  opt = contractCalcs( effDate, termDate, termPlusSpan, rtnPair);
+						  opt = contractCalcs( effDate, termDate, termPlusSpan, rtnPair, calcTableMap);
 					}	
 					request.getSession().setAttribute("opt", opt);
 					//System.out.println("*** Dispatch to:" + dispatchJSP);
 					//System.out.println("*** Buy - 24plus (3):" +  calcTableMap.get("3").getBuy24plus() + "--");
-					System.out.println("The size of the calcTableMap is:" + calcTableMap.size()); 
+					//System.out.println("The size of the calcTableMap is:" + calcTableMap.size()); 
 					request.getRequestDispatcher(dispatchJSP).forward(request, response);	
 				} else {
 					request.getRequestDispatcher(dispatchJSP_Error).forward(request, response);

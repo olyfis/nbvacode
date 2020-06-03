@@ -39,7 +39,7 @@
 	 HashMap<String, CalcTableData> ctMap = new HashMap<String, CalcTableData>();
 	 ctMap = (HashMap<String, CalcTableData>)session.getAttribute("calcTableMap");
 	 
-	 System.out.println("*** JSP -> The size of the rtnAssetMap is:" + rtnAssetMap.size());
+	// System.out.println("*** JSP -> The size of the rtnAssetMap is:" + rtnAssetMap.size());
 	 
 	 
 	 
@@ -47,8 +47,8 @@
 		if (ctMap.isEmpty()) {
 			 System.out.println("*** JSP -> ctMap is Empty"); 
 		 }
-		System.out.println("*** JSP -> The size of the ctMap is:" + ctMap.size());
-		System.out.println("*** JSP --Buy - 24plus (5):" + ctMap.get("5").getRoll24plus() + "--");
+		//System.out.println("*** JSP -> The size of the ctMap is:" + ctMap.size());
+		//System.out.println("*** JSP --Buy - 24plus (5):" + ctMap.get("5").getRoll24plus() + "--");
 	} else {
 		System.out.println("*** JSP -> ctMap is Null");
 	}
