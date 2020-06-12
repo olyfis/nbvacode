@@ -816,25 +816,48 @@ public class NbvaCodeDisp extends HttpServlet {
  			double buyOutTotal = 0.00;
  			double rollTotal = 0.00;
  			double rtnTotal = 0.00;
- 			double residualFactor = 0.00; // assigned from calcTable
+ 			double buyResidualFactor = 0.00; // assigned from calcTable
+ 			double rollResidualFactor = 0.00; // assigned from calcTable
+ 			String key = "";
  			
- 			
- 			String key = Integer.toString(mthRem); ;
+ 			int mr = 0;
  			int dispCode = 0;
  			int k = 0;
  			int rArrSZ = dataObj.get(0).getRight().size();
  			//System.out.println("*** rArrSZ=" + rArrSZ + "--");
- 			System.out.println("*** mthRem:" + mthRem + "--");
- 			System.out.println("*** getBuy24:" + calcTableMap.get(key).getBuy24() + "--");
- 			System.out.println("*** getBuy24plus:" + calcTableMap.get(key).getBuy24plus() + "--");
- 			System.out.println("*** getRoll24:" + calcTableMap.get(key).getRoll24() + "--");
- 			System.out.println("*** getRoll24plus:" + calcTableMap.get(key).getRoll24plus() + "--");
  			
  			
  			
  			ContractData contract =  dataObj.get(0).getLeft();
  			purchOpt = contract.getPurOption();
  			assets = dataObj.get(0).getRight();
+ 			
+ 			long term = contract.getTerm();
+ 			
+ 			
+ 			if (mthRem <= 0) { // in EverGreen
+ 				key = Integer.toString(Math.abs(mthRem));
+ 				if (term <= 24) {
+ 					buyResidualFactor = calcTableMap.get(key).getBuy24() * 0.01;
+ 					//mr = Math.abs(mthRem);
+ 				} else {
+ 					
+ 					buyResidualFactor = calcTableMap.get(key).getBuy24plus() * 0.01;
+ 				} 
+ 			} else {
+ 				//key = "0";
+ 				buyResidualFactor = calcTableMap.get(key).getBuy24plus();
+ 			}
+ 			System.out.println("***  KEY=" + key + "-- Term="  + term + "-- BRF="  + buyResidualFactor);
+
+ 			
+ 			System.out.println("*** KEY=" + key + "-- TermRemain="  + term + "-- MR=" + mr);
+ 			System.out.println("*** mthRem:" + mthRem + "--");
+ 			System.out.println("*** getBuy24:" + calcTableMap.get(key).getBuy24() + "-- Key=" + key); // <= 24
+ 			System.out.println("*** getBuy24plus:" + calcTableMap.get(key).getBuy24plus() + "-- Key=" + key); //  > 24
+ 			System.out.println("*** getRoll24:" + calcTableMap.get(key).getRoll24() + "-- Key=" + key);
+ 			System.out.println("*** getRoll24plus:" + calcTableMap.get(key).getRoll24plus() + "--Key=" + key);
+ 			
  			for (k = 0; k < rArrSZ; k++) {	
  				price = 0.00;
  				rentalAmt = assets.get(k).getaRentalAmt();
@@ -847,7 +870,8 @@ public class NbvaCodeDisp extends HttpServlet {
  				double buyPrice = 0.00;
  				double rtnPrice = 0.00;
  				
- 				
+ 				/***********************************************************************************************************************************************************/
+ 				 
  					if (purchOpt.equals("01"))  { //  ($1.00 Buyout)
  						rollPrice = (mthRem * rentalAmt); // rollOver
  						buyPrice = (mthRem * rentalAmt);
@@ -859,7 +883,8 @@ public class NbvaCodeDisp extends HttpServlet {
  								// rollover
  								rollPrice = (mthRem * rentalAmt) + pv;
  								// buyout
- 								buyPrice = (mthRem * rentalAmt) + (residual * 1.20);
+ 								buyPrice = (mthRem * rentalAmt) + (residual * buyResidualFactor);
+ 	//buyPrice = (mthRem * rentalAmt) + (residual * residualFactor);  // new calc
  								// return
  								rtnPrice = (mthRem * rentalAmt);
  						    } else if (residual == 0)  {					        
@@ -869,8 +894,8 @@ public class NbvaCodeDisp extends HttpServlet {
  						    }
  						} else if (option.equals("opt_2")) {	// less than 9 months in evergreen			
  								if (residual > 0) { // Option 3
- 											rollPrice = (residual * 1.15);
- 											buyPrice = (residual * 1.20);
+ 											rollPrice = (residual * rollResidualFactor);
+ 											buyPrice = (residual * buyResidualFactor);
  								  			rtnPrice = 0.00; 
  								} else if (residual == 0)  {	
  									rollPrice = equipCost * 0.10;
@@ -879,12 +904,14 @@ public class NbvaCodeDisp extends HttpServlet {
  								}
  						} else if (option.equals("opt_3")) { // in evergreen >= 9 months
  							if (residual > 0) { // Option 3
- 								 
- 									rollPrice =  residual * ( 1.15 + (0.05 * mthRem));	
- 									buyPrice =  residual * ( 1.20 + (0.05 * mthRem));
+ 								
+ 									rollPrice =  residual * ( rollResidualFactor );	
+ 									buyPrice =  residual * ( buyResidualFactor );
  									rtnPrice = 0.00;
+ 									System.out.println("***OPT3 -> Residual=" + residual   + "-- buyResidualFactor=" + buyResidualFactor + "-- BuyPrice=" + buyPrice + "--");
  								 	
  						    } else if (residual == 0)  { 
+ 						    	System.out.println("***OPT3  in opt 3 else");
  						    	   rollPrice =  1.01;
  						    	   buyPrice =  1.01;
  								   rtnPrice = 0.00;	 		       
@@ -899,9 +926,11 @@ public class NbvaCodeDisp extends HttpServlet {
  				dataObj.get(0).getRight().get(k).setRollPrice(rollPrice);;
  				dataObj.get(0).getRight().get(k).setRtnPrice(rtnPrice);;
  				//assets.add(k, element);
- 				//System.out.println("*** OPT="  +  option + " -- floorPrice=" +  price + "-- ID="  +  assetID + " -- PV=" + pv  + " -- PO=" + purchOpt + "-- RA=" + rentalAmt + "-- dispCode=" + dispCode   + "--");
-
+ 				System.out.println("*** OPT="  +  option + " -- floorPrice=" +  price + "-- ID="  +  assetID + " -- PV=" + pv  + " -- PO=" + purchOpt + "-- RA=" + rentalAmt + "-- dispCode=" + dispCode   + "--");
+ 				System.out.println("***^^*** BP=" + dataObj.get(0).getRight().get(k).getBuyPrice() + "--");
  			} // End for
+ 			
+ 			 
  			dataObj.get(0).getLeft().setBuyOut(buyOutTotal);
  			dataObj.get(0).getLeft().setRollTotal(rollTotal);
  			dataObj.get(0).getLeft().setRtnTotal(rtnTotal);

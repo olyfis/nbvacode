@@ -601,19 +601,14 @@ public String  buildCellsAsset( HashMap<String, String> hm, JspWriter out,  List
 				*/
 				
 				//cells +="<TD>" + asset.getTermDate() + "</td> ";
-				double price = asset.getBuyPrice();
-				
-				
-				System.out.println("!!!!! ***^^*** aID=" + asset.getAssetId() + "-- BuyPrice=" + asset.getBuyPrice() + "-- Price=" + price + "--");
-				
 				
 				String roll  = Olyutil.decimalfmt(asset.getRollPrice(), "$###,##0.00");
 				String buy  = Olyutil.decimalfmt(asset.getBuyPrice(), "$###,##0.00");
 				String rtn  = Olyutil.decimalfmt(asset.getRtnPrice(), "$###,##0.00");
 				
-				cells +="<TD>" + buy + "</td> ";
-				cells +="<TD>" + roll  + "</td> ";
 				
+				cells +="<TD>" + roll  + "</td> ";
+				cells +="<TD>" + buy  + "</td> ";
 				cells +="<TD>" + rtn  + "</td> ";
 				
 				//cells +="<TD>" + fp  + "</td> ";
