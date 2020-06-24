@@ -834,7 +834,7 @@ public class NbvaCodeDisp extends HttpServlet {
  			
  			long term = contract.getTerm();
  			
- 			
+ 			System.out.println("*** MTHREM=" + mthRem + "--");
  			if (mthRem <= 0) { // in EverGreen
  				key = Integer.toString(Math.abs(mthRem));
  				if (term <= 24) {
@@ -845,8 +845,10 @@ public class NbvaCodeDisp extends HttpServlet {
  					buyResidualFactor = calcTableMap.get(key).getBuy24plus() * 0.01;
  				} 
  			} else {
- 				//key = "0";
- 				buyResidualFactor = calcTableMap.get(key).getBuy24plus();
+ 				key = "0";
+ 				System.out.println("***!!***  KEY=" + key + "-- Term="  + term + "-- BRF="  + buyResidualFactor);
+
+ 				//buyResidualFactor = calcTableMap.get(key).getBuy24plus();
  			}
  			System.out.println("***  KEY=" + key + "-- Term="  + term + "-- BRF="  + buyResidualFactor);
 

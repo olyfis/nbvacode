@@ -19,6 +19,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 import java.util.logging.Handler;
 import java.util.logging.Logger;
 
@@ -446,16 +447,18 @@ public class AssetListExcelMain extends HttpServlet {
 
 	
 	/****************************************************************************************************************************************************/
-	public static void loadWorkSheetAssets(XSSFWorkbook workbook, XSSFSheet sheet, List<Pair<ContractData, List<AssetData> >> rtnPair ) {
+	public static void loadWorkSheetAssets(XSSFWorkbook workbook, XSSFSheet sheet, List<Pair<ContractData, List<AssetData> >> rtnPair, HashMap<String, String> rMap ) {
 		AssetData assetData = new AssetData();
 		int listArrSZ = rtnPair.size();
-		
+		String model = "";
+		String modelRtn = "N/A";
 		if (listArrSZ > 0) {	
 			for (int i = 0; i < listArrSZ; i++ ) {
 				int rtnArrSZ = rtnPair.get(i).getRight().size();
 				List<AssetData> assetList = new ArrayList<AssetData>();
 				assetList	= rtnPair.get(i).getRight();
 				//System.out.println("<h5> listArrSZ =" + listArrSZ + " -- rtnArrSZ=" +  rtnArrSZ + "--</h5>");
+				Set<String> keys = rMap.keySet();	
 				for (int n = 0; n < rtnArrSZ; n++ ) {
 					AssetData asset = new AssetData();
 					asset = assetList.get(n);
@@ -526,8 +529,24 @@ public class AssetListExcelMain extends HttpServlet {
 					cell.setCellStyle(style);
 					cell.setCellValue((String) asset.getEquipZip());
 					//sheet.autoSizeColumn(9); 
+					model = (String) asset.getModel();
+					//System.out.println("*** FOUND:" + model + "-- Value="  + rMap.get(model) + "--");	
+					//modelRtn = rMap.get(model);
+				
+					if (keys.contains(model)) {
+						modelRtn = rMap.get(model);
+						System.out.println("*** FOUND:" + model + "-- Value="  + rMap.get(model) + "--");		
+					} else {
+						modelRtn = "N/A";
+					}
 					
+					 //System.out.println("*** Model=" + asset.getModel() + "--");
+				
 					cell = row.createCell(10);
+					cell.setCellStyle(style);
+					cell.setCellValue((String) modelRtn);
+					
+					cell = row.createCell(11);
 					cell.setCellStyle(style);
 					cell.setCellValue((int) asset.getDispCode());
 					//sheet.autoSizeColumn(10); 
@@ -619,8 +638,8 @@ public class AssetListExcelMain extends HttpServlet {
 	/****************************************************************************************************************************************************/
 	
 	/*****************************************************************************************************************************************************/
-	public static void buildExcel(HashMap<String, List<Pair<ContractData, List<AssetData>>>> objMap, HttpServletResponse response) throws FileNotFoundException {
-		 
+	public static void buildExcel(HashMap<String, List<Pair<ContractData, List<AssetData>>>> objMap, HttpServletResponse response, HashMap<String, String> rm) throws FileNotFoundException {
+	
 		String contractHeaderFile = "C:\\Java_Dev\\props\\headers\\NBVA_ContractHrd.txt";
 		String headerFile = "C:\\Java_Dev\\props\\headers\\NBVA_AssetHrdExcel.txt";
 		String ageFile = "C:\\Java_Dev\\props\\nbvaupdate\\dailyAge.csv";
@@ -659,7 +678,7 @@ public class AssetListExcelMain extends HttpServlet {
 			//System.out.println("** Call loadWorkSheetContracts");
 			loadWorkSheetContracts(workbook, sheet, list);
 			//System.out.println("** Call loadWorkSheetAssets");
-			loadWorkSheetAssets(workbook, sheet, list);
+			loadWorkSheetAssets(workbook, sheet, list, rm);
 	        
 	        //System.out.println("***********************************************************************************************************");
 	    }
@@ -689,6 +708,29 @@ public class AssetListExcelMain extends HttpServlet {
 		}
 		
 	}
+	/****************************************************************************************************************************************************/
+	public static HashMap<String, String>  getReturnStat(String statFile) {
+		HashMap<String, String> rMap = new HashMap<String, String>();
+		ArrayList<String> strArr = new ArrayList<String>();
+		String key = "";
+		String rVal = "";
+		strArr = Olyutil.readInputFile(statFile);
+		if (strArr.size() > 0) {
+			for (String str : strArr) {
+				String[] items = str.split(",");
+				key = items[0];
+				rVal= items[1];
+				
+				rMap.put(key, rVal);
+			}
+		} else {
+			rMap = null;
+		}
+		
+    
+		return(rMap);
+	}
+
 /****************************************************************************************************************************************************/
 
 	// Service method
@@ -705,6 +747,8 @@ public class AssetListExcelMain extends HttpServlet {
 		Date date = Olyutil.getCurrentDate();
 		String dateStamp = date.toString();
 		
+		HashMap<String, String> rtnAssetMap = new HashMap<String, String>();
+		
 		ArrayList<String> ageArr = new ArrayList<String>();
 		ArrayList<String> idArrList = new ArrayList<String>();
 		ArrayList<String> kitArr = new ArrayList<String>();
@@ -713,6 +757,8 @@ public class AssetListExcelMain extends HttpServlet {
 		String ageFile = "C:\\Java_Dev\\props\\nbvaupdate\\dailyAge.csv";
 		String FILE_NAME = "NBVA_Asset_List_Report_" + dateStamp + ".xlsx";
 		String excelTemplate = "C:\\Java_Dev\\props\\nbvaupdate\\excelTemplates\\AssetList.xlsx";
+		String rtnFile = "C:\\Java_Dev\\props\\nbvaupdate\\returnStat.csv";
+		rtnAssetMap = getReturnStat(rtnFile);
 		XSSFWorkbook workbook = null;
 		XSSFSheet sheet = null;
 		idArrList = (ArrayList<String>) request.getSession().getAttribute("idArrList");
@@ -735,7 +781,7 @@ public class AssetListExcelMain extends HttpServlet {
 		}
 
 		
-		buildExcel(objMap, response);
+		buildExcel(objMap, response, rtnAssetMap);
 		
 		
 	

@@ -21,6 +21,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
@@ -60,7 +61,44 @@ public class GetAssetList extends HttpServlet {
 	static String purchOption = "";
 	static int mthRem = 0;
 	/****************************************************************************************************************************************************/
-	
+	/****************************************************************************************************************************************************************/
+ 	public static boolean displayHashMap(HashMap<String, String> hashMap) {
+		boolean status = false;
+
+		Set<String> keys = hashMap.keySet(); // get all keys
+		if (keys.size() > 0) {
+			status = true;
+			for (String key : keys) {
+				System.out.println("**----** Key=" + key + "-- Value=" + hashMap.get(key) + "--");
+			}
+		}
+		return (status);
+	}
+	/****************************************************************************************************************************************************/
+	public static HashMap<String, String>  getReturnStat(String statFile) {
+		HashMap<String, String> rMap = new HashMap<String, String>();
+		ArrayList<String> strArr = new ArrayList<String>();
+		String key = "";
+		String rVal = "";
+		strArr = Olyutil.readInputFile(statFile);
+		if (strArr.size() > 0) {
+			for (String str : strArr) {
+				String[] items = str.split(",");
+				key = items[0];
+				rVal= items[1];
+				
+				rMap.put(key, rVal);
+			}
+		} else {
+			rMap = null;
+		}
+		
+    
+		return(rMap);
+	}
+
+/****************************************************************************************************************************************************************/
+
 	/****************************************************************************************************************************************************/
 
 	public static ArrayList<String> getDbData(String id, String sqlQueryFile, String booked, String qType) throws IOException {
@@ -250,6 +288,7 @@ public class GetAssetList extends HttpServlet {
 	@Override
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		HashMap<String, ArrayList<Integer>> sqlErrMap = new HashMap<String, ArrayList<Integer>>();
+		HashMap<String, String> returnMap = new HashMap<String, String>();
 		ArrayList<Integer> errIDArrayRtn = new ArrayList<>();
 		ArrayList<String> ageArr = new ArrayList<String>();
 		double sumTotal = 0.0;
@@ -264,7 +303,7 @@ public class GetAssetList extends HttpServlet {
 		String idVal = "";
 		//String dispatchJSP = "/nbvalist.jsp";
 		
-		
+		String rtnFile = "C:\\Java_Dev\\props\\nbvaupdate\\returnStat.csv";
 		String dispatchJSP = "/nbvalistexcelmain";
 		String dispatchJSP_Error = "/nbvaerror.jsp";
 		//String ageFile = "Y:\\GROUPS\\Global\\BI Reporting\\Finance\\FIS_Bobj\\unappsuspense\\dailyAge.csv";
@@ -299,7 +338,8 @@ public class GetAssetList extends HttpServlet {
 		
 		ageArr = Olyutil.readInputFile(ageFile);
 		// Olyutil.printStrArray(ageArr);
-
+		//returnMap = getReturnStat(rtnFile);
+		//displayHashMap(returnMap);
 		request.getRequestDispatcher(dispatchJSP).forward(request, response);	
 		/*
 		if ((paramValue != null && !paramValue.isEmpty())) {
