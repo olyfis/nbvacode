@@ -217,7 +217,7 @@ public class AssetListExcelMain extends HttpServlet {
         titleCell.setCellStyle(styles.get("cell"));
         
         titleCell.setCellStyle(styles.get("title"));
-        sheet.addMergedRegion(CellRangeAddress.valueOf("$A$1:$K$1"));
+        sheet.addMergedRegion(CellRangeAddress.valueOf("$A$1:$L$1"));
        
         
         
@@ -399,29 +399,45 @@ public class AssetListExcelMain extends HttpServlet {
 				Cell cell = row.createCell(1);
 				cell.setCellStyle(style);
 				cell.setCellValue((String) contractData.getContractID());
+				Cell cell2 = row.createCell(11);
+				cell2.setCellStyle(style);
+				cell2.setCellValue((String) "1 - Buyout");
+				
+				
 				
 				row = sheet.getRow(5); // AgreementNum
 				cell = row.createCell(1);
 				cell.setCellStyle(style);
 				cell.setCellValue((String) contractData.getCustomerID());		
 				//cell.setCellValue((String) "TBD");
-				
+				cell2 = row.createCell(11);
+				cell2.setCellStyle(style);
+				cell2.setCellValue((String) "2 - Rollover");
 				
 				row = sheet.getRow(6);
 				cell = row.createCell(1);
 				cell.setCellStyle(style);
 				cell.setCellValue((String) contractData.getCustomerName());		
+				cell2 = row.createCell(11);
+				cell2.setCellStyle(style);
+				cell2.setCellValue((String) "3 - Return");
 		
 				row = sheet.getRow(7);
 				sheet.autoSizeColumn(1); 
 				cell = row.createCell(1);
 				cell.setCellStyle(style);
 				cell.setCellValue((String) contractData.getCommenceDate());	
+				cell2 = row.createCell(11);
+				cell2.setCellStyle(style);
+				cell2.setCellValue((String) "4 - Return and Roll PV");
 				
 				row = sheet.getRow(8);
 				cell = row.createCell(1);
 				cell.setCellStyle(style);
 				cell.setCellValue((String) contractData.getTermDate());
+				cell2 = row.createCell(11);
+				cell2.setCellStyle(style);
+				cell2.setCellValue((String) "5 - FMV Title Transfer");
 				
 				
 				row = sheet.getRow(9);
@@ -429,18 +445,28 @@ public class AssetListExcelMain extends HttpServlet {
 				cell.setCellStyle(style);
 				cell.setCellValue((long) contractData.getTerm());
 				style.setAlignment(HorizontalAlignment.LEFT);
-				
+				String ep = Olyutil.decimalfmt((double) contractData.getEquipPayment(), "$###,##0.00");
 				row = sheet.getRow(10);
 				cell = row.createCell(1);
 				cell.setCellStyle(style);
-				cell.setCellValue((double) contractData.getEquipPayment());
+				//cell.setCellValue((double) contractData.getEquipPayment());
+				
+				cell.setCellValue(ep);
 				style.setAlignment(HorizontalAlignment.LEFT);
 				
+				String sp = Olyutil.decimalfmt((double) contractData.getServicePayment(), "$###,##0.00");
 				row = sheet.getRow(11);
 				cell = row.createCell(1);
 				cell.setCellStyle(style);
-				cell.setCellValue((double) contractData.getServicePayment());
+				//cell.setCellValue((double) contractData.getServicePayment());
+				cell.setCellValue(sp);
 				style.setAlignment(HorizontalAlignment.LEFT);
+				
+				
+				
+				
+				
+				
 			}
 		}
 	}
@@ -535,9 +561,14 @@ public class AssetListExcelMain extends HttpServlet {
 				
 					if (keys.contains(model)) {
 						modelRtn = rMap.get(model);
-						System.out.println("*** FOUND:" + model + "-- Value="  + rMap.get(model) + "--");		
+						//System.out.println("*** FOUND:" + model + "-- Value="  + rMap.get(model) + "--");		
 					} else {
-						modelRtn = "N/A";
+						if (! Olyutil.isNullStr(asset.getSerNum() )) {
+							modelRtn = "Yes";
+						} else {
+							modelRtn = "N/A";
+						}
+						
 					}
 					
 					 //System.out.println("*** Model=" + asset.getModel() + "--");
